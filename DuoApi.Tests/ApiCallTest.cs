@@ -394,7 +394,7 @@ public class TestApiCall
         var jsonResponse = api.JSONPagingApiCall<string>("GET", "/json_ok", parameters, 0, 10, out var metadata);
         Assert.Equal("hello, world!", jsonResponse);
         
-        Assert.Equal(10, metadata.next_offset);
+        Assert.Equal(10, metadata.next_offset.Value);
         // make sure parameters was not changed as a side-effect
         Assert.Empty(parameters);
     }

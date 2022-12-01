@@ -13,31 +13,33 @@ namespace Duo
         /// 
         /// </summary>
         [Required]
-        public DuoApiResponseStatus stat { get; set; }
+        public DuoApiResponseStatus Stat { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
-        public int? code { get; set; }
+        public int? Code { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
-        public T response { get; set; }
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+        public T Response { get; set; }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         /// <summary>
         /// Upon error, basic error information
         /// </summary>
-        public string message { get; set; }
+        public string? Message { get; set; }
 
         /// <summary>
         /// Upon error, detailed error information
         /// </summary>
-        public string message_detail { get; set; }
+        public string? Message_detail { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
-        public PagingInfo metadata { get; set; }
+        public PagingInfo? Metadata { get; set; }
     }
 }

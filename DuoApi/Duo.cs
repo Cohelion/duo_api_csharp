@@ -21,7 +21,7 @@ using System.Web;
 
 namespace Duo
 {
-	public class DuoApi
+	public partial class DuoApi
     {
         public string DEFAULT_AGENT = "DuoAPICSharp/1.0";
 
@@ -37,7 +37,7 @@ namespace Duo
         private SleepService sleepService;
         private RandomService randomService;
         private bool sslCertValidation = true;
-        private X509CertificateCollection customRoots = null;
+        private X509CertificateCollection? customRoots = null;
         
         // TLS 1.0/1.1 deprecation effective June 30, 2023
         // Of the SecurityProtocolType enum, it should be noted that SystemDefault is not available prior to .NET 4.7 and TLS 1.3 is not available prior to .NET 4.8.
@@ -65,12 +65,12 @@ namespace Duo
         /// <param name="skey">Duo secret key</param>
         /// <param name="host">Application secret key</param>
         /// <param name="user_agent">HTTP client User-Agent</param>
-        public DuoApi(string ikey, string skey, string host, string user_agent)
+        public DuoApi(string ikey, string skey, string host, string? user_agent)
             : this(ikey, skey, host, user_agent, "https", new ThreadSleepService(), new SystemRandomService())
         {
         }
 
-        protected DuoApi(string ikey, string skey, string host, string user_agent, string url_scheme,
+        protected DuoApi(string ikey, string skey, string host, string? user_agent, string url_scheme,
                 SleepService sleepService, RandomService randomService)
         {
             this.ikey = ikey;
@@ -79,14 +79,10 @@ namespace Duo
             this.url_scheme = url_scheme;
             this.sleepService = sleepService;
             this.randomService = randomService;
-            if (String.IsNullOrEmpty(user_agent))
-            {
-                this.user_agent = FormatUserAgent(DEFAULT_AGENT);
-            }
-            else
-            {
-                this.user_agent = user_agent;
-            }
+
+            this.user_agent = string.IsNullOrEmpty(user_agent) 
+                                ? FormatUserAgent(DEFAULT_AGENT) 
+                                : user_agent;
         }
 
         ///  <summary>
@@ -135,10 +131,10 @@ namespace Duo
 
         public static string CanonicalizeParams(Dictionary<string, string> parameters)
         {
-            var ret = new List<String>();
+            var ret = new List<string>();
             foreach (KeyValuePair<string, string> pair in parameters)
             {
-                string p = String.Format("{0}={1}",
+                string p = string.Format("{0}={1}",
                                          HttpUtility.UrlEncode(pair.Key),
                                          HttpUtility.UrlEncode(pair.Value));
 
@@ -153,7 +149,7 @@ namespace Duo
         // handle value as an object eg. next_offset = ["123", "fdajkld"]
         public static string CanonicalizeParams(Dictionary<string, object> parameters)
         {
-            var ret = new List<String>();
+            var ret = new List<string>();
             foreach (KeyValuePair<string, object> pair in parameters)
             {
                 string p = "";
@@ -162,7 +158,7 @@ namespace Duo
                     string[] values = (string[])pair.Value;
                     string value1 = values[0];
                     string value2 = values[1];
-                    p = String.Format("{0}={1}&{2}={3}",
+                    p = string.Format("{0}={1}&{2}={3}",
                                         HttpUtility.UrlEncode(pair.Key),
                                         HttpUtility.UrlEncode(value1),
                                         HttpUtility.UrlEncode(pair.Key),
@@ -171,7 +167,7 @@ namespace Duo
                 else
                 {
                     string val = (string)pair.Value;
-                    p = String.Format("{0}={1}",
+                    p = string.Format("{0}={1}",
                                         HttpUtility.UrlEncode(pair.Key),
                                         HttpUtility.UrlEncode(val));
                 }
@@ -195,7 +191,7 @@ namespace Duo
                 path,
                 canon_params,
             };
-            string canon = String.Join("\n",
+            string canon = string.Join("\n",
                                        lines);
             return canon;
         }
@@ -284,8 +280,8 @@ namespace Duo
             return reader.ReadToEnd();
         }
 
-        private HttpWebRequest PrepareHttpRequest(String method, String url, String auth, String date,
-            String cannonParams, int timeout)
+        private HttpWebRequest PrepareHttpRequest(string method, string url, string auth, string date,
+            string cannonParams, int timeout)
         {
             ServicePointManager.SecurityProtocol = SelectSecurityProtocolType;
             
@@ -338,7 +334,7 @@ namespace Duo
         }
 
         private HttpWebResponse AttemptRetriableHttpRequest(
-            String method, String url, String auth, String date, String cannonParams, int timeout)
+            string method, string url, string auth, string date, string cannonParams, int timeout)
         {
             int backoffMs = INITIAL_BACKOFF_MS;
             while (true)
@@ -384,7 +380,7 @@ namespace Duo
                                 Dictionary<string, string> parameters,
                                 int timeout,
                                 DateTime date,
-                                out PagingInfo metaData)
+                                out PagingInfo? metaData)
         {
             HttpStatusCode statusCode;
             string res = this.ApiCall(method, path, parameters, timeout, date, out statusCode);
@@ -400,20 +396,24 @@ namespace Duo
                 options.Converters.Add(new JsonStringEnumConverter());
 
                 var dict = JsonSerializer.Deserialize<DataEnvelope<T>>(res, options);
-                if (dict.stat == DuoApiResponseStatus.Ok)
+
+                if(dict is null)
+                    throw new BadResponseException(0,res);
+
+                if (dict.Stat == DuoApiResponseStatus.Ok)
                 {
-                    metaData = dict.metadata;
-                    return dict.response;
+                    metaData = dict.Metadata;
+                    return dict.Response;
                 }
                 else
                 {
 
-                    int code = dict.code.GetValueOrDefault();
+                    int code = dict.Code.GetValueOrDefault();
 
                     throw new ApiException(code,
                                            (int)statusCode,
-                                           dict.message,
-                                           dict.message_detail);
+                                           dict.Message,
+                                           dict.Message_detail);
                 }
             }
             catch (ApiException)
@@ -422,7 +422,7 @@ namespace Duo
             }
             catch (Exception e)
             {
-                throw new BadResponseException((int)statusCode, e);
+                throw new BadResponseException((int)statusCode,res, e);
             }
         }
 
@@ -476,7 +476,7 @@ namespace Duo
                                Dictionary<string, string> parameters,
                                int offset,
                                int limit,
-                               out PagingInfo metaData)
+                               out PagingInfo? metaData)
         {
             return JSONPagingApiCall<T>(method, path, parameters, offset, limit, 0, DateTime.UtcNow, out metaData);
         }
@@ -508,7 +508,7 @@ namespace Duo
                                 int limit,
                                 int timeout,
                                 DateTime date,
-                                out PagingInfo metaData)
+                                out PagingInfo? metaData)
         {
             // copy parameters so we don't cause any side-effects
             parameters = new Dictionary<string, string>(parameters);
@@ -524,7 +524,7 @@ namespace Duo
         /// <param name="product_name">e.g. "FooClient/1.0"</param>
         public static string FormatUserAgent(string product_name)
         {
-            return String.Format(
+            return string.Format(
                  "{0} ({1}; .NET {2})", product_name, System.Environment.OSVersion,
                  System.Environment.Version);
         }
@@ -688,9 +688,9 @@ namespace Duo
         {
             public int dwAccessType;
             [MarshalAs(UnmanagedType.LPWStr)]
-            public string lpszProxy;
+            public string? lpszProxy;
             [MarshalAs(UnmanagedType.LPWStr)]
-            public string lpszProxyBypass;
+            public string? lpszProxyBypass;
         }
         [DllImport("winhttp.dll", CharSet = CharSet.Unicode)]
         private static extern bool WinHttpGetDefaultProxyConfiguration([In, Out] WINHTTP_PROXY_INFO proxyInfo);
@@ -712,7 +712,7 @@ namespace Duo
     {
         public int HttpStatus { get; private set; }
 
-        public DuoException(int http_status, string message, Exception inner)
+        public DuoException(int http_status, string message, Exception? inner)
             : base(message, inner)
         {
             this.HttpStatus = http_status;
@@ -728,13 +728,13 @@ namespace Duo
     public class ApiException : DuoException
     {
         public int Code { get; private set; }
-        public string ApiMessage { get; private set; }
-        public string ApiMessageDetail { get; private set; }
+        public string? ApiMessage { get; private set; }
+        public string? ApiMessageDetail { get; private set; }
 
         public ApiException(int code,
                             int http_status,
-                            string api_message,
-                            string api_message_detail)
+                            string? api_message,
+                            string? api_message_detail)
             : base(http_status, FormatMessage(code, api_message, api_message_detail), null)
         {
             this.Code = code;
@@ -748,10 +748,10 @@ namespace Duo
         { }
 
         private static string FormatMessage(int code,
-                                            string api_message,
-                                            string api_message_detail)
+                                            string? api_message,
+                                            string? api_message_detail)
         {
-            return String.Format(
+            return string.Format(
                 "Duo API Error {0}: '{1}' ('{2}')", code, api_message, api_message_detail);
         }
     }
@@ -759,24 +759,29 @@ namespace Duo
     [Serializable]
     public class BadResponseException : DuoException
     {
-        public BadResponseException(int http_status, Exception inner)
-            : base(http_status, FormatMessage(http_status, inner), inner)
-        { }
+        public string? Response { get; private set; }
+
+        public BadResponseException(int http_status, string? response = null, Exception? inner = null)
+            : base(http_status, FormatMessage(http_status, response, inner), inner)
+        {
+            Response = response;
+        }
 
         protected BadResponseException(System.Runtime.Serialization.SerializationInfo info,
                                        System.Runtime.Serialization.StreamingContext ctxt)
             : base(info, ctxt)
-        { }
+        {
+            Response = info.GetString("Response");
+        }
 
-        private static string FormatMessage(int http_status, Exception inner)
+        private static string FormatMessage(int http_status, string? response, Exception? inner)
         {
             string inner_message = "(null)";
             if (inner != null)
             {
-                inner_message = String.Format("'{0}'", inner.Message);
+                inner_message = string.Format("'{0}'", inner.Message);
             }
-            return String.Format(
-                "Got error {0} with HTTP Status {1}", inner_message, http_status);
+            return $"Got error {inner_message} with HTTP Status {http_status}. Response : {response}";
         }
     }
 
