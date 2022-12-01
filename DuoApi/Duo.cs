@@ -23,6 +23,9 @@ namespace Duo
 {
 	public partial class DuoApi
     {
+        /// <summary>
+        /// The default user agent string sent to DUO
+        /// </summary>
         public string DEFAULT_AGENT = "DuoAPICSharp/1.0";
 
         private const int INITIAL_BACKOFF_MS = 1000;
@@ -70,6 +73,17 @@ namespace Duo
         {
         }
 
+        /// <summary>
+        /// Protected constructor, allowing injection of <paramref name="sleepService"/> and <paramref name="randomService"/>.
+        /// Also allows specifying non-https <paramref name="url_scheme"/>.
+        /// </summary>
+        /// <param name="ikey">Duo integration key</param>
+        /// <param name="skey">Duo secret key</param>
+        /// <param name="host">Application secret key</param>
+        /// <param name="user_agent">HTTP client User-Agent</param>
+        /// <param name="url_scheme"></param>
+        /// <param name="sleepService"></param>
+        /// <param name="randomService"></param>
         protected DuoApi(string ikey, string skey, string host, string? user_agent, string url_scheme,
                 SleepService sleepService, RandomService randomService)
         {
@@ -111,7 +125,7 @@ namespace Duo
             return this;
         }
 
-        public static string FinishCanonicalize(string p)
+        internal static string FinishCanonicalize(string p)
         {
             // Signatures require upper-case hex digits.
             p = Regex.Replace(p,
@@ -129,7 +143,7 @@ namespace Duo
             return p;
         }
 
-        public static string CanonicalizeParams(Dictionary<string, string> parameters)
+        internal static string CanonicalizeParams(Dictionary<string, string> parameters)
         {
             var ret = new List<string>();
             foreach (KeyValuePair<string, string> pair in parameters)
@@ -147,7 +161,7 @@ namespace Duo
 
 
         // handle value as an object eg. next_offset = ["123", "fdajkld"]
-        public static string CanonicalizeParams(Dictionary<string, object> parameters)
+        internal static string CanonicalizeParams(Dictionary<string, object> parameters)
         {
             var ret = new List<string>();
             foreach (KeyValuePair<string, object> pair in parameters)
@@ -179,7 +193,7 @@ namespace Duo
         }
 
 
-        protected string CanonicalizeRequest(string method,
+        internal string CanonicalizeRequest(string method,
                                              string path,
                                              string canon_params,
                                              string date)
@@ -196,7 +210,8 @@ namespace Duo
             return canon;
         }
 
-        public string Sign(string method,
+
+        internal string Sign(string method,
                            string path,
                            string canon_params,
                            string date)
@@ -210,7 +225,7 @@ namespace Duo
             return "Basic " + DuoApi.Encode64(auth);
         }
 
-        public string ApiCall(string method,
+        internal string ApiCall(string method,
                               string path,
                               Dictionary<string, string> parameters)
         {
@@ -218,6 +233,9 @@ namespace Duo
             return ApiCall(method, path, parameters, 0, DateTime.UtcNow, out statusCode);
         }
 
+        /// <param name="method"></param>
+        /// <param name="path"></param>
+        /// <param name="parameters"></param>
         /// <param name="timeout">The request timeout, in milliseconds.
         /// Specify 0 to use the system-default timeout. Use caution if
         /// you choose to specify a custom timeout - some API
@@ -225,19 +243,24 @@ namespace Duo
         /// return a response until an out-of-band authentication process
         /// has completed. In some cases, this may take as much as a
         /// small number of minutes.</param>
-        public string ApiCall(string method,
+        /// <param name="statusCode"></param>
+        internal string ApiCall(string method,
                               string path,
                               Dictionary<string, string> parameters,
                               int timeout,
                               out HttpStatusCode statusCode)
         {
-            return ApiCall(method, path, parameters, 0, DateTime.UtcNow, out statusCode);
+            return ApiCall(method, path, parameters, timeout, DateTime.UtcNow, out statusCode);
         }
 
+        /// <param name="method"></param>
+        /// <param name="path"></param>
+        /// <param name="parameters"></param>
         /// <param name="date">The current date and time, used to authenticate
         /// the API request. Typically, you should specify DateTime.UtcNow,
         /// but if you do not wish to rely on the system-wide clock, you may
         /// determine the current date/time by some other means.</param>
+        /// <param name="statusCode"></param>
         /// <param name="timeout">The request timeout, in milliseconds.
         /// Specify 0 to use the system-default timeout. Use caution if
         /// you choose to specify a custom timeout - some API
@@ -365,10 +388,15 @@ namespace Duo
             }
         }
 
+        /// <param name="method"></param>
+
+        /// <param name="path"></param>
+        /// <param name="parameters"></param>
         /// <param name="date">The current date and time, used to authenticate
         /// the API request. Typically, you should specify DateTime.UtcNow,
         /// but if you do not wish to rely on the system-wide clock, you may
         /// determine the current date/time by some other means.</param>
+        /// <param name="metaData"></param>
         /// <param name="timeout">The request timeout, in milliseconds.
         /// Specify 0 to use the system-default timeout. Use caution if
         /// you choose to specify a custom timeout - some API
@@ -426,6 +454,7 @@ namespace Duo
             }
         }
 
+        /// <summary/>
         public T JSONApiCall<T>(string method,
                                 string path,
                                 Dictionary<string, string> parameters)
@@ -434,6 +463,9 @@ namespace Duo
             return JSONApiCall<T>(method, path, parameters, 0, DateTime.UtcNow);
         }
 
+        /// <param name="method"></param>
+        /// <param name="path"></param>
+        /// <param name="parameters"></param>
         /// <param name="timeout">The request timeout, in milliseconds.
         /// Specify 0 to use the system-default timeout. Use caution if
         /// you choose to specify a custom timeout - some API
@@ -450,6 +482,10 @@ namespace Duo
             return JSONApiCall<T>(method, path, parameters, timeout, DateTime.UtcNow);
         }
 
+        /// <param name="method"></param>
+
+        /// <param name="path"></param>
+        /// <param name="parameters"></param>
         /// <param name="date">The current date and time, used to authenticate
         /// the API request. Typically, you should specify DateTime.UtcNow,
         /// but if you do not wish to rely on the system-wide clock, you may
@@ -471,6 +507,8 @@ namespace Duo
             return BaseJSONApiCall<T>(method, path, parameters, timeout, date, out _);
         }
 
+
+        /// <summary/>
         public T JSONPagingApiCall<T>(string method,
                                string path,
                                Dictionary<string, string> parameters,
@@ -481,10 +519,15 @@ namespace Duo
             return JSONPagingApiCall<T>(method, path, parameters, offset, limit, 0, DateTime.UtcNow, out metaData);
         }
 
+        /// <param name="method"></param>
+
+        /// <param name="path"></param>
+        /// <param name="parameters"></param>
         /// <param name="date">The current date and time, used to authenticate
         /// the API request. Typically, you should specify DateTime.UtcNow,
         /// but if you do not wish to rely on the system-wide clock, you may
         /// determine the current date/time by some other means.</param>
+        /// <param name="metaData"></param>
         /// <param name="timeout">The request timeout, in milliseconds.
         /// Specify 0 to use the system-default timeout. Use caution if
         /// you choose to specify a custom timeout - some API
@@ -707,30 +750,44 @@ namespace Duo
         #endregion Private DllImport
     }
 
+
+    /// <summary/>
     [Serializable]
     public class DuoException : Exception
     {
+
+        /// <summary/>
         public int HttpStatus { get; private set; }
 
+
+        /// <summary/>
         public DuoException(int http_status, string message, Exception? inner)
             : base(message, inner)
         {
             this.HttpStatus = http_status;
         }
 
+        /// <summary/>
         protected DuoException(System.Runtime.Serialization.SerializationInfo info,
                                System.Runtime.Serialization.StreamingContext ctxt)
             : base(info, ctxt)
         { }
     }
 
+    /// <summary/>
     [Serializable]
     public class ApiException : DuoException
     {
+        /// <summary/>
         public int Code { get; private set; }
+        /// <summary/>
         public string? ApiMessage { get; private set; }
+
+        /// <summary/>
         public string? ApiMessageDetail { get; private set; }
 
+
+        /// <summary/>
         public ApiException(int code,
                             int http_status,
                             string? api_message,
@@ -742,6 +799,8 @@ namespace Duo
             this.ApiMessageDetail = api_message_detail;
         }
 
+
+        /// <summary/>
         protected ApiException(System.Runtime.Serialization.SerializationInfo info,
                                System.Runtime.Serialization.StreamingContext ctxt)
             : base(info, ctxt)
@@ -756,17 +815,21 @@ namespace Duo
         }
     }
 
+    /// <summary/>
     [Serializable]
     public class BadResponseException : DuoException
     {
+        /// <summary/>
         public string? Response { get; private set; }
 
+        /// <summary/>
         public BadResponseException(int http_status, string? response = null, Exception? inner = null)
             : base(http_status, FormatMessage(http_status, response, inner), inner)
         {
             Response = response;
         }
 
+        /// <summary/>
         protected BadResponseException(System.Runtime.Serialization.SerializationInfo info,
                                        System.Runtime.Serialization.StreamingContext ctxt)
             : base(info, ctxt)
@@ -784,14 +847,24 @@ namespace Duo
             return $"Got error {inner_message} with HTTP Status {http_status}. Response : {response}";
         }
     }
-
+    /// <summary>
+    /// Service that implements waiting (unknown why this is injectable)
+    /// </summary>
     public interface SleepService
     {
+
+        /// <summary/>
         void Sleep(int ms);
     }
 
+
+    /// <summary>
+    /// Service that implements getting a random number (unknown why this is injectable)
+    /// </summary>
     public interface RandomService
     {
+
+        /// <summary/>
         int GetInt(int maxInt);
     }
 

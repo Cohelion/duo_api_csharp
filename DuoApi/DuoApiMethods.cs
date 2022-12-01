@@ -1,11 +1,13 @@
 ﻿using Duo.Models;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 
 namespace Duo
 {
+    /// <summary>
+    /// A DUO Admin Api client
+    /// </summary>
     public partial class DuoApi
     {
         /// <summary>
@@ -29,10 +31,13 @@ namespace Duo
         }
 
         /// <summary>
-        /// Get a single user by username
+        /// Gets a single user by <see cref="User.UserName"/>.
         /// </summary>
-        /// <param name="limit"></param>
+        /// <param name="userName">The username of the user.</param>
         /// <returns></returns>
+        /// <remarks>Username appears to be recyclable, but should be unique at a given point in time.
+        /// <see cref="User.User_Id"/> is permanently uniquely identifying a <see cref="User"/>.
+        /// </remarks>
         public User GetUser(string userName)
         {
             var parameters = new Dictionary<string, string> { { "username" , userName } };
