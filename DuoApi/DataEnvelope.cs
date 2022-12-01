@@ -7,7 +7,7 @@ namespace Duo
     /// 
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class DataEnvelope<T>
+    internal class DataEnvelope<T>
     {
         /// <summary>
         /// 

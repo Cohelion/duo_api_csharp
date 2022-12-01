@@ -6,6 +6,9 @@ using Xunit;
 
 public class TestRealAPICall
 {
+    /// <summary>
+    /// Secrets should not be committed, a true integration test cannot be be performed without these.
+    /// </summary>
     private const string test_ikey = "INTEGRATION KEY";
     private const string test_skey = "SECRET KEY";
     private const string test_host = "api-.duosecurity.com";

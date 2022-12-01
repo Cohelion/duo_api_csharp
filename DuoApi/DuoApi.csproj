@@ -6,25 +6,25 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <FileVersion></FileVersion>
     <AssemblyVersion></AssemblyVersion>
-    <Version>0.0.2.0</Version>
+    <Version>0.0.2.1</Version>
     <Description>A client for DUO Admin API</Description>
     <PackageReleaseNotes>
-      0.0.2.0
-      Added find user by username.
-      
-      0.0.1.0
-      Initial release, includes paged access to users
-    </PackageReleaseNotes>
-  </PropertyGroup>
+  <![CDATA[0.0.2.1
+Added documentation, reduced the number of public methods
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+0.0.2.0
+Added find user by username.
+
+0.0.1.0
+Initial release, includes paged access to users]]></PackageReleaseNotes>
+    <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+    <EnableNETAnalyzers>True</EnableNETAnalyzers>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <NoWarn />
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-    <NoWarn />
+    <PackageTags>duo admin</PackageTags>
+    <PackageProjectUrl>https://duo.com/docs/adminapi</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/duosecurity/duo_api_csharp.git</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
