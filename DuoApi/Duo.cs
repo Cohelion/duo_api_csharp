@@ -16,6 +16,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Web;
+using System.Security.Cryptography.X509Certificates;
+using System.Net.Security;
 
 namespace Duo
 {
@@ -37,6 +39,8 @@ namespace Duo
         private string user_agent;
         private SleepService sleepService;
         private RandomService randomService;
+        private bool sslCertValidation = true;
+        private X509CertificateCollection? customRoots = null;
 
                 return t;
             }
@@ -83,6 +87,32 @@ namespace Duo
             this.user_agent = string.IsNullOrEmpty(user_agent) 
                                 ? FormatUserAgent(DEFAULT_AGENT) 
                                 : user_agent;
+        }
+
+        ///  <summary>
+        /// Disables SSL certificate validation for the API calls the client makes.
+        /// Incomptible with UseCustomRootCertificates since certificates will not be checked.
+        /// 
+        /// THIS SHOULD NEVER BE USED IN A PRODUCTION ENVIRONMENT
+        /// </summary>
+        /// <returns>The DuoApi</returns>
+        public DuoApi DisableSslCertificateValidation()
+        {
+            sslCertValidation = false;
+            return this;
+        }
+
+        /// <summary>
+        /// Override the set of Duo root certificates used for certificate pinning.  Provide a collection of acceptable root certificates.
+        /// 
+        /// Incompatible with DisableSslCertificateValidation - if that is enabled, certificate pinning is not done at all. 
+        /// </summary>
+        /// <param name="customRoots">The custom set of root certificates to trust</param>
+        /// <returns>The DuoApi</returns>
+        public DuoApi UseCustomRootCertificates(X509CertificateCollection customRoots)
+        {
+            this.customRoots = customRoots;
+            return this;
         }
 
         internal static string FinishCanonicalize(string p)
@@ -269,6 +299,7 @@ namespace Duo
             ServicePointManager.SecurityProtocol = SelectSecurityProtocolType;
             
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+            request.ServerCertificateValidationCallback = GetCertificatePinner();
             request.Method = method;
             request.Accept = "application/json";
             request.Headers.Add("Authorization", auth);
@@ -297,6 +328,22 @@ namespace Duo
             }
 
             return request;
+        }
+
+        private RemoteCertificateValidationCallback GetCertificatePinner()
+        {
+            if (!sslCertValidation)
+            {
+                // Pinner that effectively disables cert pinning by always returning true
+                return CertificatePinnerFactory.GetCertificateDisabler();
+            }
+
+            if (customRoots != null)
+            {
+                return CertificatePinnerFactory.GetCustomRootCertificatesPinner(customRoots);
+            }
+
+            return CertificatePinnerFactory.GetDuoCertificatePinner();
         }
 
         private HttpWebResponse AttemptRetriableHttpRequest(
@@ -541,7 +588,12 @@ namespace Duo
             // between the offset's hours and minutes.
             string date_string = date.ToString(
                 "ddd, dd MMM yyyy HH:mm:ss", CultureInfo.InvariantCulture);
-            int offset = TimeZoneInfo.Local.GetUtcOffset(date).Hours;
+            int offset = 0;
+            // set offset if input date is not UTC time.
+            if (date.Kind != DateTimeKind.Utc)
+            {
+                offset = TimeZoneInfo.Local.GetUtcOffset(date).Hours;
+            }
             string zone;
             // + or -, then 0-pad, then offset, then more 0-padding.
             if (offset < 0)
