@@ -116,7 +116,7 @@ namespace Duo.Models
 		/// <summary>
 		/// A list of tokens that this user can use.See Retrieve Hardware Tokens for descriptions of the response values.
 		/// </summary>
-		public string[]? Tokens { get; set; }
+		public object[]? Tokens { get; set; }
 
 		/// <summary>
 		/// A list of U2F tokens that this user can use.See Retrieve U2F Tokens for descriptions of the response values.
