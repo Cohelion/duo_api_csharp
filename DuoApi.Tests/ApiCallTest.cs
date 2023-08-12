@@ -527,7 +527,7 @@ public class TestApiCall
         HttpStatusCode code;
         string response = api.ApiCall("GET", "/hello", new Dictionary<string, string>(), 10000, out code);
 
-        Assert.Equal(code, (HttpStatusCode)429);
+        Assert.Equal((HttpStatusCode)429, code);
         Assert.Equal(7, callCount);
         Assert.Equal(6, api.sleeper.sleepCalls.Count);
         Assert.Equal(1123, api.sleeper.sleepCalls[0]);
