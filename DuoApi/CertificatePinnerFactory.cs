@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2022 Cisco Systems, Inc. and/or its affiliates
  * All rights reserved
  */
@@ -13,10 +13,16 @@ using System;
 
 namespace Duo
 {
+    /// <summary>
+    ///
+    /// </summary>
     public class CertificatePinnerFactory
     {
         private readonly X509CertificateCollection _rootCerts;
 
+        /// <summary>
+        /// Certificate Pinner Factory
+        /// </summary>
         public CertificatePinnerFactory(X509CertificateCollection rootCerts)
         {
             _rootCerts = rootCerts;
@@ -130,7 +136,7 @@ namespace Duo
         internal static string[] ReadCertsFromFile()
         {
             var certs = "";
-            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream($"{Assembly.GetExecutingAssembly().GetName().Name}.ca_certs.pem"))
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("DuoApi.ca_certs.pem"))
             using (StreamReader reader = new StreamReader(stream))
             {
                 certs = reader.ReadToEnd();

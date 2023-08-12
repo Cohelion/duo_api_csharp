@@ -23,12 +23,15 @@ public class TestRealAPICall
         api = new DuoApi(test_ikey, test_skey, test_host);
     }
 
-    [Theory]
+    [SkippableTheory]
     [InlineData(1)]
     [InlineData(1, 1)]
     [InlineData(400)]
     public void GetUsers(ushort pagesize, ushort offset = 0)
     {
+        Skip.If(test_ikey == "INTEGRATION KEY", "The keys are not configure");
+        Skip.If(test_skey == "SECRET KEY", "The keys are not configure");
+
         //arrange
         //act
         var users = api.GetUsers(pagesize, out var pagingInfo, offset);
@@ -40,9 +43,12 @@ public class TestRealAPICall
         Assert.True(users.Length <= pagesize);
     }
 
-    [Fact]
+    [SkippableFact]
     public void GetAllTest()
     {
+        Skip.If(test_ikey == "INTEGRATION KEY", "The keys are not configure");
+        Skip.If(test_skey == "SECRET KEY", "The keys are not configure");
+
         //arrange
         ushort pagesize = 2;
         ushort offset = 0;
@@ -71,6 +77,9 @@ public class TestRealAPICall
     [SkippableFact]
     public void GetSingleTest()
     {
+        Skip.If(test_ikey == "INTEGRATION KEY", "The keys are not configure");
+        Skip.If(test_skey == "SECRET KEY", "The keys are not configure");
+
         //arrange
         var user = api.GetUsers(100, out _).LastOrDefault();
 
