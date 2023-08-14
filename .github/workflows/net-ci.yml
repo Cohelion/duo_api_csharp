@@ -5,11 +5,9 @@ on:
     branches:
       - master
       - main
-      - feature/.*
+      - feature/*
   pull_request:
-    branches:
-      - .*
-
+    
 jobs:
 # Build and test on .NET Core
   dotnet-core-ci:
