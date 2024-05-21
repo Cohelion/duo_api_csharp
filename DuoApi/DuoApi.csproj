@@ -6,10 +6,13 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <FileVersion></FileVersion>
     <AssemblyVersion></AssemblyVersion>
-    <Version>0.0.2.3</Version>
+    <Version>0.0.3</Version>
     <Description>A client for DUO Admin API</Description>
     <PackageReleaseNotes>
-  <![CDATA[0.0.2.3
+  <![CDATA[0.0.3
+Upgrade to .net 8.0
+
+0.0.2.3
 Fix token from User class as object
 
 0.0.2.2
