@@ -18,6 +18,7 @@ using System.Text.RegularExpressions;
 using System.Web;
 using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
+using Duo.Models;
 
 namespace Duo
 {
@@ -42,14 +43,25 @@ namespace Duo
         private bool sslCertValidation = true;
         private X509CertificateCollection? customRoots = null;
 
-                return t;
-            }
-        }
 
-        /// <param name="ikey">Duo integration key</param>
-        /// <param name="skey">Duo secret key</param>
-        /// <param name="host">Application secret key</param>
-        public DuoApi(string ikey, string skey, string host)
+		// TLS 1.0/1.1 deprecation effective June 30, 2023
+		// Of the SecurityProtocolType enum, it should be noted that SystemDefault is not available prior to .NET 4.7 and TLS 1.3 is not available prior to .NET 4.8.
+		private static SecurityProtocolType SelectSecurityProtocolType
+		{
+			get
+			{
+				SecurityProtocolType t;
+				if (!Enum.TryParse(ConfigurationManager.AppSettings["DuoAPI_SecurityProtocolType"], out t))
+					return SecurityProtocolType.Tls12;
+
+				return t;
+			}
+		}
+
+		/// <param name="ikey">Duo integration key</param>
+		/// <param name="skey">Duo secret key</param>
+		/// <param name="host">Application secret key</param>
+		public DuoApi(string ikey, string skey, string host)
             : this(ikey, skey, host, null)
         {
         }
@@ -296,9 +308,9 @@ namespace Duo
         private HttpWebRequest PrepareHttpRequest(string method, string url, string auth, string date,
             string cannonParams, int timeout)
         {
-            ServicePointManager.SecurityProtocol = SelectSecurityProtocolType;
-            
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+			ServicePointManager.SecurityProtocol = SelectSecurityProtocolType;
+
+			HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
             request.ServerCertificateValidationCallback = GetCertificatePinner();
             request.Method = method;
             request.Accept = "application/json";
@@ -444,8 +456,23 @@ namespace Duo
             }
         }
 
-        /// <summary/>
-        public T JSONApiCall<T>(string method,
+		private Dictionary<string, object> DeserializeJsonToMixedDictionary(string json)
+		{
+			var sourceDict = JsonSerializer.Deserialize
+				<Dictionary<string, JsonElement>>(json);
+			var targetDict = new Dictionary<string, object>();
+			if (sourceDict != null)
+				foreach (var kvp in sourceDict)
+			    {
+#pragma warning disable CS8604 // Possible null reference argument.
+				    targetDict.Add(kvp.Key, kvp.Value.ConvertToObject());
+#pragma warning restore CS8604 // Possible null reference argument.
+			    }
+			return targetDict;
+		}
+
+		/// <summary/>
+		public T JSONApiCall<T>(string method,
                                 string path,
                                 Dictionary<string, string> parameters)
             where T : class
